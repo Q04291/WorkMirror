@@ -38,7 +38,7 @@
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/yourusername/workmirror.git
+git clone https://github.com/Q04291/WorkMirror.git
 cd workmirror
 
 # 2. 安装前端依赖
