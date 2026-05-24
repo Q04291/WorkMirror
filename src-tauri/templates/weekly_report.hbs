@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorkMirror 周报 — {{week_range}}</title>
+<style>
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.6;
+  color: #1f2937;
+  background: #f8fafc;
+  padding: 2rem;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Color Scheme — Light ===== */
+:root {
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --accent: #2563eb;
+  --accent-light: #dbeafe;
+  --accent-dark: #1d4ed8;
+  --success: #059669;
+  --success-light: #d1fae5;
+  --warning: #d97706;
+  --warning-light: #fef3c7;
+  --danger: #dc2626;
+  --border: #e5e7eb;
+  --bar-bg: #e5e7eb;
+  --bar-fill: linear-gradient(90deg, #2563eb, #3b82f6);
+  --bar-fill-deep: linear-gradient(90deg, #059669, #10b981);
+  --divider: #e5e7eb;
+  --footer-text: #9ca3af;
+}
+
+/* ===== Color Scheme — Dark ===== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f172a;
+    --card-bg: #1e293b;
+    --card-shadow: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent: #60a5fa;
+    --accent-light: #1e3a5f;
+    --accent-dark: #93c5fd;
+    --success: #34d399;
+    --success-light: #064e3b;
+    --warning: #fbbf24;
+    --warning-light: #78350f;
+    --danger: #f87171;
+    --border: #334155;
+    --bar-bg: #334155;
+    --bar-fill: linear-gradient(90deg, #3b82f6, #60a5fa);
+    --bar-fill-deep: linear-gradient(90deg, #10b981, #34d399);
+    --divider: #334155;
+    --footer-text: #64748b;
+  }
+}
+
+/* ===== Layout ===== */
+.container { max-width: 900px; margin: 0 auto; }
+
+/* ===== Header ===== */
+.report-header {
+  text-align: center;
+  padding: 2rem 1.5rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.report-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.35rem;
+}
+.report-header .subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+.report-header .generated-at {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ===== Cards ===== */
+.card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.card-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--accent);
+  display: inline-block;
+}
+
+/* ===== Stats Grid ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+.stat-item {
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+}
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.2;
+}
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.2rem;
+}
+.stat-item.deep .stat-value { color: var(--success); }
+
+/* ===== Daily Chart ===== */
+.daily-chart { margin-top: 0.5rem; }
+.daily-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  gap: 0.75rem;
+}
+.daily-row .day-label {
+  width: 2.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-align: right;
+  flex-shrink: 0;
+}
+.daily-row .bar-track {
+  flex: 1;
+  height: 1.5rem;
+  background: var(--bar-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.daily-row .bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  background: var(--bar-fill);
+  transition: width 0.6s ease;
+  min-width: 0;
+}
+.daily-row .bar-fill.deep { background: var(--bar-fill-deep); }
+.daily-row .hours-label {
+  width: 3.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: left;
+  flex-shrink: 0;
+}
+
+/* ===== App Ranking ===== */
+.app-rank { margin-top: 0.5rem; }
+.app-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.45rem;
+  gap: 0.75rem;
+}
+.app-row .rank-num {
+  width: 1.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: center;
+  flex-shrink: 0;
+}
+.app-row .rank-num.top1 { color: var(--warning); }
+.app-row .rank-num.top2 { color: var(--text-secondary); }
+.app-row .rank-num.top3 { color: #cd7f32; }
+.app-row .app-name {
+  width: 7rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.app-row .bar-track {
+  flex: 1;
+  height: 1.3rem;
+  background: var(--bar-bg);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.app-row .bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  background: var(--bar-fill);
+  transition: width 0.6s ease;
+  min-width: 0;
+}
+.app-row .stat-label {
+  width: 5rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ===== AI Insights ===== */
+.insight-block {
+  background: var(--accent-light);
+  border-left: 4px solid var(--accent);
+  padding: 1rem 1.25rem;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 1rem;
+}
+.insight-block p {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+.suggestions-list {
+  list-style: none;
+  padding: 0;
+}
+.suggestions-list li {
+  position: relative;
+  padding: 0.45rem 0 0.45rem 1.5rem;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+.suggestions-list li::before {
+  content: "✦";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-size: 0.85rem;
+}
+
+/* ===== Trend ===== */
+.trend-text {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* ===== Empty State ===== */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--text-muted);
+}
+.empty-state .empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+.empty-state p {
+  font-size: 1rem;
+}
+
+/* ===== Footer ===== */
+.report-footer {
+  text-align: center;
+  padding: 1.5rem;
+  font-size: 0.8rem;
+  color: var(--footer-text);
+}
+
+/* ===== Print Styles ===== */
+@media print {
+  body {
+    background: white;
+    color: black;
+    padding: 0.5in;
+    font-size: 11pt;
+  }
+  .card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .report-header h1 { color: #2563eb; }
+  .stats-grid { grid-template-columns: repeat(4, 1fr); }
+  @page { margin: 0.4in; size: A4; }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+  body { padding: 0.75rem; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  .stat-value { font-size: 1.3rem; }
+  .card { padding: 1rem; }
+  .app-row .app-name { width: 5rem; }
+  .daily-row .day-label { width: 2rem; font-size: 0.8rem; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="report-header">
+    <h1>📊 WorkMirror 周报</h1>
+    <p class="subtitle">{{week_range}}</p>
+    <p class="generated-at">生成时间：{{report_generated_at}}</p>
+  </header>
+
+  {{#if daily_data.length}}
+
+  <!-- ==================== STATS OVERVIEW ==================== -->
+  <section class="card">
+    <div class="card-title">📈 本周概览</div>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-value">{{total_active_hours}}<span style="font-size:0.8rem;">h</span></div>
+        <div class="stat-label">总活跃时间</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">{{avg_daily_hours}}<span style="font-size:0.8rem;">h</span></div>
+        <div class="stat-label">日均活跃</div>
+      </div>
+      <div class="stat-item deep">
+        <div class="stat-value">{{total_deep_hours}}<span style="font-size:0.8rem;">h</span></div>
+        <div class="stat-label">深度工作</div>
+      </div>
+      <div class="stat-item deep">
+        <div class="stat-value">{{deep_work_percent}}<span style="font-size:0.8rem;">%</span></div>
+        <div class="stat-label">深度工作占比</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== APP RANKING ==================== -->
+  {{#if top_apps.length}}
+  <section class="card">
+    <div class="card-title">📱 应用使用排行榜</div>
+    <div class="app-rank">
+      {{#each top_apps}}
+      <div class="app-row">
+        <div class="rank-num {{#if @first}}top1{{else if @second}}top2{{else if @third}}top3{{/if}}">
+          {{this.rank}}
+        </div>
+        <div class="app-name">{{this.name}}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:{{this.percent}}%;"></div>
+        </div>
+        <div class="stat-label">{{this.hours}}h ({{this.percent}}%)</div>
+      </div>
+      {{/each}}
+    </div>
+  </section>
+  {{/if}}
+
+  <!-- ==================== DAILY DISTRIBUTION ==================== -->
+  <section class="card">
+    <div class="card-title">📅 每日时间分布</div>
+    <div class="daily-chart">
+      {{#each daily_data}}
+      <div class="daily-row">
+        <div class="day-label">{{this.day_name}}</div>
+        <div class="bar-track">
+          <div class="bar-fill{{#if @root.deep_work}} deep{{/if}}" style="width:{{this.bar_width}}%;"></div>
+        </div>
+        <div class="hours-label">{{this.hours}}h</div>
+      </div>
+      {{/each}}
+    </div>
+  </section>
+
+  <!-- ==================== AI INSIGHTS ==================== -->
+  {{#if has_suggestions}}
+  <section class="card">
+    <div class="card-title">💡 AI 洞察与建议</div>
+    <ul class="suggestions-list">
+      {{#each improvement_suggestions}}
+      <li>{{this}}</li>
+      {{/each}}
+    </ul>
+  </section>
+  {{/if}}
+
+  <!-- ==================== TREND ==================== -->
+  {{#if has_trend}}
+  <section class="card">
+    <div class="card-title">📉 趋势对比</div>
+    <p class="trend-text">{{trend_analysis}}</p>
+  </section>
+  {{/if}}
+
+  {{else}}
+  <!-- ==================== NO DATA ==================== -->
+  <section class="card">
+    <div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <p>本周暂无活动记录</p>
+      <p style="font-size:0.85rem;margin-top:0.5rem;">开启追踪后，数据会出现在这里</p>
+    </div>
+  </section>
+  {{/if}}
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="report-footer">
+    <p>WorkMirror — 由本地数据自动生成 · {{report_generated_at}}</p>
+  </footer>
+
+</div>
+</body>
+</html>
